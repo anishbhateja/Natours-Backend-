@@ -2,6 +2,8 @@ const fs = require('fs');
 const express = require('express');
 const app = express();
 
+app.use(express.json()); //middleware, PUTS DATA of incomming request in it's body (req.body)
+
 // app.get('/', (req, res) => {
 //   res
 //     .status(200)
@@ -13,7 +15,7 @@ const app = express();
 // });
 
 const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
+  fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`, 'utf-8')
 );
 
 app.get('/api/v1/tours', (req, res) => {
@@ -24,6 +26,25 @@ app.get('/api/v1/tours', (req, res) => {
       tours,
     },
   });
+});
+
+app.post('/api/v1/tours', (req, res) => {
+  const newId = tours.length;
+  console.log(req.body);
+  const newTour = Object.assign({ id: newId }, req.body);
+  tours.push(newTour);
+  fs.writeFile(
+    `${__dirname}/dev-data/data/tours-simple.json`,
+    JSON.stringify(tours),
+    (err) => {
+      res.status(201).json({
+        status: 'success',
+        data: {
+          tour: newTour,
+        },
+      });
+    }
+  );
 });
 
 const port = 3000;
