@@ -4,7 +4,7 @@
   "description": "learning node,express mongoDB",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "nodemon server.js"
   },
   "author": "Anish Bhateja",
   "license": "ISC",
