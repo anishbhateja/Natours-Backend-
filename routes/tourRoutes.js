@@ -4,10 +4,13 @@ const tourController = require('./../controllers/tourController');
 
 const router = express.Router();
 
+//router.param is middleware that will only run for the param 'id'
+router.param('id', tourController.checkId);
+
 router
   .route('/')
   .get(tourController.getAllTours)
-  .post(tourController.createTour);
+  .post(tourController.checkBody, tourController.createTour);
 router
   .route('/:id')
   .get(tourController.getTour)
