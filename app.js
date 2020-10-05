@@ -6,9 +6,12 @@ const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 
 //1) MIDDLEWARES
-app.use(morgan('dev')); //LOGGER
-app.use(express.json()); //middleware, PUTS DATA of incomming request in it's body (req.body)
-app.use(express.static(`${__dirname}/public`));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev')); //LOGGER
+}
+
+app.use(express.json()); //middleware, PUTS DATA of incomming request(JSON) in it's body (req.body)
+app.use(express.static(`${__dirname}/public`)); //middleware that allows us to access static files,when nothing matches the route
 
 app.use((req, res, next) => {
   console.log('Hello from the middleware 👋');
