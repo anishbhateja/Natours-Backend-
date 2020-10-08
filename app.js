@@ -1,4 +1,5 @@
 const express = require('express');
+
 const app = express();
 const morgan = require('morgan');
 
@@ -14,7 +15,7 @@ app.use(express.json()); //middleware, PUTS DATA of incomming request(JSON) in i
 app.use(express.static(`${__dirname}/public`)); //middleware that allows us to access static files,when nothing matches the route
 
 app.use((req, res, next) => {
-  console.log('Hello from the middleware 👋');
+  //console.log('Hello from the middleware 👋');
   next();
 });
 
