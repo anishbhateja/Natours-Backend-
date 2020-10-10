@@ -1,4 +1,5 @@
 const Tour = require('./../models/tourModels');
+const APIFeatures = require('./../utils/apiFeaturs');
 
 // const tours = JSON.parse(
 //   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, 'utf-8')
@@ -6,19 +7,29 @@ const Tour = require('./../models/tourModels');
 
 //2) ROUTE HANDLERS (TOUR)
 
-// exports.checkId = (req, res, next, value) => {
-//   if (value >= tours.length) {
-//     return res.status(404).json({
-//       status: 'fail from middleware',
-//       message: 'Invalid ID',
-//     });
-//   }
-//   next();
-// };
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
 
 exports.getAllTours = async (req, res) => {
   try {
-    const tours = await Tour.find();
+    //EXECUTING QUERY
+
+    //we're creating object of APIFeatures class, object contains the query object and queryString, we want to chain these
+    //function one by to the query object
+
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    const tours = await features.query;
+    //after chaining requests, we can write await, it will execute the query and get the corresponding documents
+
+    //SEND RESPONSE
     res.status(200).json({
       status: 'success',
       results: tours.length,
@@ -55,9 +66,6 @@ exports.getTour = async (req, res) => {
 
 exports.createTour = async (req, res) => {
   try {
-    //   const newTour = new Tour({  }); //method-1
-    // newTour.save(); //we call save on the object to
-
     const newTour = await Tour.create(req.body);
 
     res.status(201).json({
