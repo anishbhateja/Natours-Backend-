@@ -47,8 +47,13 @@ const tourSchema = new mongoose.Schema(
     //   },
     startDates: [Date], //an array of Dates
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
+//virtual properties, fields defined in schema but will not be saved in DB
+// use regular function to use 'this' keyword, this refers to the current document
+tourSchema.virtual('durationWeeks').get(function () {
+  return this.duration / 7;
+});
 
 const Tour = mongoose.model('Tour', tourSchema); //MODELS ARE LIKE CLASSES, WE CREATE DOCS(OBJECTS) OUT OF THEM
 
