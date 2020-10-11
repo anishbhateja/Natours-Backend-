@@ -26,7 +26,7 @@ exports.getAllTours = async (req, res) => {
       .sort()
       .limitFields()
       .paginate();
-    const tours = await features.query;
+    const tours = await features.query; //before this is executed query middleware is executed to further filter out the query
     //after chaining requests, we can write await, it will execute the query and get the corresponding documents
 
     //SEND RESPONSE

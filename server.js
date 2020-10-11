@@ -22,33 +22,6 @@ mongoose
   })
   .then(() => console.log('DB connection successful'));
 
-// const tourSchema = new mongoose.Schema({
-//   name: {
-//     type: String,
-//     required: [true, 'A tour must have a name'],
-//     unique: true,
-//   },
-//   rating: { type: Number, default: 4.5 },
-//   price: { type: Number, required: [true, 'A tour must have a price'] },
-// });
-
-// const Tour = mongoose.model('Tour', tourSchema); //MODELS ARE LIKE CLASSES, WE CREATE DOCS(OBJECTS) OUT OF THEM
-
-// const testTour = new Tour({
-//   //created new object out of class
-//   name: 'The Park camper',
-//   price: 997,
-// });
-// //save document in db
-// testTour
-//   .save()
-//   .then((doc) => {
-//     console.log(doc);
-//   })
-//   .catch((err) => {
-//     console.log('Error 💥💥💥💥', err);
-//   });
-
 //console.log(app.get('env')); //set by express
 //console.log(process.env); //environment variables set by nodes
 
