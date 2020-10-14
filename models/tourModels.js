@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -7,6 +8,15 @@ const tourSchema = new mongoose.Schema(
       type: String,
       required: [true, 'A tour must have a name'],
       unique: true,
+      maxlength: [
+        40,
+        'A tour must have length less than or equal to 40 character',
+      ],
+      minlength: [
+        10,
+        'A tour must have length more than or equal to 10 character',
+      ],
+      //  validate: [validator.isAlpha, 'Tour names must only contain characters'], // validator library for checking
     },
     slug: String,
     duration: {
@@ -20,14 +30,39 @@ const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       required: [true, 'A tour must have difficulty'],
+      enum: {
+        //Should only be used with strings
+        values: ['easy', 'medium', 'difficult'],
+        message: 'Difficulty is either: easy, medium or difficult ',
+      },
     },
-    ratingsAverage: { type: Number, default: 4.5 },
+    ratingsAverage: {
+      type: Number,
+      default: 4.5,
+      min: [1, 'Rating must be above 1'],
+      max: [5, 'Rating must be below 5'],
+    },
     ratingsQuantity: {
       type: Number,
       default: 0,
     },
     price: { type: Number, required: [true, 'A tour must have a price'] },
-    priceDiscount: { type: Number },
+    priceDiscount: {
+      type: Number,
+      //   validate: {
+      //     message: 'Discount price ({VALUE}) should be below regular price',
+      //     validator: function (val) {
+      //       //this only point to current document on NEW DOCUMENT creation, doesn't work on updateDocument
+      //       return val < this.price; //100<200=true, 250-200=false this will refer to the current document
+      //     },
+      //   },
+      validate: [
+        function (val) {
+          return val < this.price;
+        },
+        'Discount price should be below regular price',
+      ],
+    },
     summary: {
       type: String,
       trim: true,

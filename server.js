@@ -3,6 +3,13 @@ const mongoose = require('mongoose');
 
 dotenv.config({ path: `${__dirname}/config.env` }); //used to read .env files and store them into nodejs environment variables
 
+//Error handling for uncaughtException Bugs in synchronous code, this will shut down the server gracefully
+process.on('uncaughtException', (err) => {
+  console.log(err.name, err.message);
+  console.log('UNCAUGHT EXCEPTION!💥Shutting down....');
+  process.exit(1); //0->success 1->unhandled rejection
+});
+
 const app = require('./app');
 
 const DB = process.env.DATABASE.replace(
@@ -26,6 +33,15 @@ mongoose
 //console.log(process.env); //environment variables set by nodes
 
 const port = process.env.PORT;
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log('App running on port:', port);
+});
+
+//Error handling for unhandledRejection eg failed promises asynchronous, this will shut down the server gracefully
+process.on('unhandledRejection', (err) => {
+  console.log(err.name, err.message);
+  console.log('UNHANDLED REJECTION! 💥Shutting down....');
+  server.close(() => {
+    process.exit(1); //0->success 1->unhandled rejection
+  });
 });

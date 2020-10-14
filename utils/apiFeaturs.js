@@ -58,6 +58,6 @@ class APIFeatures {
   }
 }
 
-//query.find({filter object}).sort('price ratingsAverage').select('name duration price').skip(2).limit(5)
+//query.find({filter object}).sort('price ratingsAverage').select('name duration price').skip(2).limit(Adde5)
 
 module.exports = APIFeatures;
