@@ -14,8 +14,6 @@ const handleDuplicateFieldsDB = (err) => {
 
 const handleValidationErrorDB = (err) => {
   const errors = Object.values(err.errors).map((ele) => ele.message);
-  console.log(Object.values(err.errors));
-
   const message = `Invalid input data. ${errors.join('. ')}`;
   return new AppError(message, 400);
 };
@@ -48,7 +46,8 @@ const sendErrorProd = (err, res) => {
   }
 };
 
-//whenever there are 4 inputs, it is the global error handling express middleware
+//whenever there are 4 inputs, it is the
+//GLOBAL ERROR HANDLING MIDDLEWARE
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
