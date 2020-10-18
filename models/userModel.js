@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema(
         'Passwords are not the same!',
       ],
     },
+    passwordChangedAt: Date,
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
@@ -63,6 +64,17 @@ userSchema.methods.correctPassword = async function (
 ) {
   return await bcrypt.compare(candidatePassword, userPassword); //cannot be compared directly because user password is hashed
 }; //hence bcypt is used to compare hash passwords to string passwords
+
+userSchema.methods.changedPasswordAfter = async function (JWTTimestamp) {
+  let changedTimestamp;
+  if (this.passwordChangedAt) {
+    changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000);
+    return changedTimestamp > JWTTimestamp;
+    //TRUE: PASSWORD CHANGED POST ISSUING OF TOKEN
+  }
+  //FALSE MEANS NOT CHANGED
+  return false;
+};
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

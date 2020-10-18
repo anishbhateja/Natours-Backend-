@@ -18,6 +18,14 @@ const handleValidationErrorDB = (err) => {
   return new AppError(message, 400);
 };
 
+const handleJWTError = () => {
+  return new AppError('Invalid token, Please log in again!', 401);
+};
+
+const handleExpiredToken = () => {
+  return new AppError('Your token has expired! Please log in again!', 401);
+};
+
 //In development mode we want to send as musch information as possible to the client
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -31,6 +39,7 @@ const sendErrorDev = (err, res) => {
 const sendErrorProd = (err, res) => {
   if (err.isOperational) {
     //Trusted Error:  Errors created by our own appError class, we send a little discriptive message
+
     res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
@@ -64,7 +73,12 @@ module.exports = (err, req, res, next) => {
     if (error._message === 'Validation failed') {
       error = handleValidationErrorDB(error);
     }
-
+    if (error.name === 'JsonWebTokenError') {
+      error = handleJWTError();
+    }
+    if (error.name === 'TokenExpiredError') {
+      error = handleExpiredToken();
+    }
     sendErrorProd(error, res);
   }
 };

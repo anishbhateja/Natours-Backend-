@@ -18,6 +18,7 @@ app.use(express.static(`${__dirname}/public`)); //middleware that allows us to a
 
 app.use((req, res, next) => {
   console.log('Hello from the middleware 🙄');
+  //console.log(req.headers);
   next();
 });
 
