@@ -23,6 +23,10 @@ router
   .route('/:id')
   .get(tourController.getTour)
   .patch(tourController.updateTour)
-  .delete(tourController.deleteTour);
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'), //Not all logged in users shouldbe able to perform same action on API, like no user should be able to
+    tourController.deleteTour //delete the tour, it should only be the admin
+  );
 
 module.exports = router;

@@ -12,7 +12,6 @@ const userRouter = require('./routes/userRoutes');
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev')); //LOGGER
 }
-
 app.use(express.json()); //middleware, PUTS DATA of incomming request(JSON) in it's body (req.body)
 app.use(express.static(`${__dirname}/public`)); //middleware that allows us to access static files,when nothing matches the route
 
