@@ -2,11 +2,18 @@ const fs = require('fs');
 const express = require('express');
 const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
+const reviewRouter = require('./reviewRoutes');
 
 const router = express.Router();
 
 //router.param is middleware that will only run for the param 'id'
 //router.param('id', tourController.checkId);
+
+//POST /tour/56789e/reviews          create review
+//GET /tour/56789e/reviews           find all review for a particular tour
+//GET /tour/56789e/reviews/6543fd    Get a particular review for a particular tour
+
+router.use('/:tourId/reviews', reviewRouter);
 
 router
   .route('/top-5-cheap')

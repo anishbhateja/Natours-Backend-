@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 const validator = require('validator');
+const User = require('./userModel');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -13,7 +14,7 @@ const tourSchema = new mongoose.Schema(
         'A tour must have length less than or equal to 40 character',
       ],
       minlength: [
-        10,
+        1,
         'A tour must have length more than or equal to 10 character',
       ],
       //  validate: [validator.isAlpha, 'Tour names must only contain characters'], // validator library for checking
@@ -87,13 +88,56 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    startLocation: {
+      //GeoJSON Object
+      //GeoJSON (this object is not for options like above but is itself an embedded object)
+      //In order to define geospatial data, we need to define an object with atleast 2 properties which are type and coordinates
+      //Each of these subfields will have their own options
+      type: {
+        type: String,
+        default: 'Point', //we can specify multiple geometries in mongoDB, default is Point
+        enum: ['Point'],
+      },
+      coordinate: [Number], //long,lat
+      address: String,
+      description: String,
+    },
+    locations: [
+      //this is an array of GeoJSON objects
+      {
+        type: {
+          type: String,
+          default: 'Point', //we can specify multiple geometries in mongoDB, default is Point
+          enum: ['Point'],
+        },
+        coordinate: [Number], //long,lat
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    guides: [
+      {
+        //for referencing
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 //virtual properties, fields defined in schema but will not be saved in DB
+
 // use regular function to use 'this' keyword, this refers to the current document
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7; //Add toJSON: { virtuals: true }, toObject: { virtuals: true } in options
+});
+
+//VIRTUAL POPULATE
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour', //matching foreign field 'tour' in Review collection
+  localField: '_id', //Comparing it with _id of this document, it will fetch all those review documents with matching foreign-local fields
 });
 
 //DOCUMENT MIDDLEWARE: runs before .save() and .create()  but NOT inserMany()
@@ -102,6 +146,14 @@ tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true }); //add slug to schema to modify it
   next();
 });
+
+// tourSchema.pre('save', async function (next) { //Embeds documents in DB
+//   const guidesPromises = this.guides.map(async (id) => {
+//     return await User.findById(id);
+//   });
+//   this.guides = await Promise.all(guidesPromises);
+//   next();
+// });
 
 // tourSchema.pre('save', function (next) {
 //   console.log('Will save document......');
@@ -114,6 +166,7 @@ tourSchema.pre('save', function (next) {
 // });
 
 //QUERY MIDDLEWARE
+
 tourSchema.pre(/^find/, function (next) {
   //regular expression will work for all find cases
   //'this' is the query object
@@ -126,6 +179,15 @@ tourSchema.pre(/^find/, function (next) {
 //   this.find({ secretTour: { $ne: true } });
 //   next();
 // });
+
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    //this points to the current query, populating guides before executing queries
+    path: 'guides',
+    select: '-__v -passwordChangedAt',
+  });
+  next();
+});
 
 tourSchema.post(/^find/, function (docs, next) {
   //will run after quey is executed
