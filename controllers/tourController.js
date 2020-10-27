@@ -2,6 +2,7 @@ const Tour = require('../models/tourModels');
 const APIFeatures = require('../utils/apiFeaturs');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const factory = require('./handlerFactory');
 
 // const tours = JSON.parse(
 //   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, 'utf-8')
@@ -16,97 +17,14 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
-exports.getAllTours = async (req, res, next) => {
-  try {
-    //EXECUTING QUERY
-
-    //we're creating object of APIFeatures class, object contains the query object and queryString, we want to chain these
-    //function one by to the query object
-    //The class will return a features object, features will contain the query chained with all the features
-    //Only await needs to be put ahead of that query object in order to execute it
-    const features = new APIFeatures(Tour.find(), req.query)
-      .filter()
-      .sort()
-      .limitFields()
-      .paginate();
-    const tours = await features.query; //before this is executed query middleware is executed to further filter out the query
-    //after chaining requests, we can write await, it will execute the query and get the corresponding documents
-
-    //SEND RESPONSE
-    res.status(200).json({
-      status: 'success',
-      results: tours.length,
-      data: {
-        tours,
-      },
-    });
-  } catch (error) {
-    res.status(400).json({
-      status: 'fail',
-      message: `ERROR 💥 ${error}`,
-    });
-  }
-};
-
-exports.getTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findById(req.params.id).populate('reviews');
-  //Tours.findOne({_id:req.params.id})
-
-  if (!tour) {
-    return next(new AppError('No tour found with that ID', 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
-});
-
 //catchAsync function takes a function as argument,  catchAsync function returns another function, this other function that it returns
 //takes arguments which required to execute the function which it itself takes as the argument
-exports.createTour = catchAsync(async (req, res, next) => {
-  const newTour = await Tour.create(req.body);
+exports.getAllTours = factory.getAll(Tour);
+exports.getTour = factory.getOne(Tour, { path: 'reviews' });
+exports.createTour = factory.createOne(Tour);
+exports.updateTour = factory.updateOne(Tour);
+exports.deleteTour = factory.deleteOne(Tour);
 
-  res.status(201).json({
-    status: 'success',
-    data: {
-      tour: newTour,
-    },
-  });
-});
-
-exports.updateTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-
-  if (!tour) {
-    return next(new AppError('No tour found with that ID', 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
-});
-
-exports.deleteTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findByIdAndDelete(req.params.id);
-
-  if (!tour) {
-    return next(new AppError('No tour found with that ID', 404));
-  }
-
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
-});
 //Aggregation: We define a pipeline, in which documents of a collection are passed, they're processed at various stages and are
 //finally used to compute averages,min, max etc................................
 
@@ -183,5 +101,84 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
     data: {
       plan,
     },
+  });
+});
+
+// /tours-within/:distance/center/:latlng/unit/:unit,
+///tours-within/300/center/34.125639, -118.126945/unit/km
+
+//returns all tours that lies within a given distance of a given latlng
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  console.log(distance, latlng, unit);
+
+  const [lat, lng] = latlng.split(',');
+
+  //radius is measured in radians-> distance/radius of earth
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        `Please provide latitude and longitude in the format lat,lng.`,
+        400
+      )
+    );
+  }
+  //querying for startLocation: because it holds geoSpatial points where each tour starts
+  //For this to work we also have need an attribute an index to the field where geoSpatial data is stored, startLocation in this field
+  const tours = await Tour.find({
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } }, //queying for tours that are ecnclosed within the distance of latlng point
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: tours.length,
+    data: tours,
+  });
+});
+
+//Returns distances of all tours from a given latlng
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        `Please provide latitude and longitude in the format lat,lng.`,
+        400
+      )
+    );
+  } //for geospatial aggregation, we only have one single stage $geoNear
+  // it should always be the first one in the pipeline and
+  //One of the fields must be geoSpatial index, startLocation in our case
+  //$geoNear will automatically use the geoSpatial index to perform calculation
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          //near has to be define as geoJSON
+          type: 'Point',
+          coordinates: [lng * 1, lat * 1], //will calculate distances between this near point and startLoaction of sll tours
+        },
+        distanceField: 'distance', //this field will be added to all the tours with the above calculated distances in METRE
+        distanceMultiplier: multiplier, //here we can specify a number that will multipied with all the numbers, Coverting metre to km or miles
+      },
+    },
+    {
+      $project: {
+        //only these fields will be projected
+        distance: 1,
+        name: 1,
+      },
+    },
+  ]);
+  res.status(200).json({
+    status: 'success',
+    results: distances.length,
+    data: distances,
   });
 });

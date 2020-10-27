@@ -9,10 +9,7 @@ const router = express.Router();
 //router.param is middleware that will only run for the param 'id'
 //router.param('id', tourController.checkId);
 
-//POST /tour/56789e/reviews          create review
-//GET /tour/56789e/reviews           find all review for a particular tour
-//GET /tour/56789e/reviews/6543fd    Get a particular review for a particular tour
-
+//Redirect all routes for '/:tourId/reviews' to reviewRouter
 router.use('/:tourId/reviews', reviewRouter);
 
 router
@@ -20,16 +17,40 @@ router
   .get(tourController.aliasTopTours, tourController.getAllTours);
 
 router.route('/tour-stats').get(tourController.getTourStats);
-router.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
+router
+  .route('/monthly-plan/:year')
+  .get(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide', 'guide'),
+    tourController.getMonthlyPlan
+  );
+
+//Search tours within given distance at a given lat long
+///tours-within/300/center/233.-135/unit/km
+router
+  .route('/tours-within/:distance/center/:latlng/unit/:unit')
+  .get(tourController.getToursWithin);
+
+//Get distances of ALL tours from a given point
+router.route('/distance/:latlng/unit/:unit').get(tourController.getDistances);
 
 router
   .route('/')
-  .get(authController.protect, tourController.getAllTours)
-  .post(tourController.createTour);
+  .get(tourController.getAllTours) //Everyone should be able to view all tours, no auth. req.
+  .post(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'), //Only admin and lead guides should be allowed to create tours
+    tourController.createTour
+  );
+
 router
   .route('/:id')
   .get(tourController.getTour)
-  .patch(tourController.updateTour)
+  .patch(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.updateTour
+  )
   .delete(
     authController.protect,
     authController.restrictTo('admin', 'lead-guide'), //Not all logged in users shouldbe able to perform same action on API, like no user should be able to

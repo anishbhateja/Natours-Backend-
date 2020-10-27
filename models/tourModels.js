@@ -42,6 +42,8 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1'],
       max: [5, 'Rating must be below 5'],
+      set: (val) => Math.round(val * 10) / 10, //4.6666 -> 46.666 -> 47 -> 4.7
+      //will be run whenever this value is updated
     },
     ratingsQuantity: {
       type: Number,
@@ -50,13 +52,6 @@ const tourSchema = new mongoose.Schema(
     price: { type: Number, required: [true, 'A tour must have a price'] },
     priceDiscount: {
       type: Number,
-      //   validate: {
-      //     message: 'Discount price ({VALUE}) should be below regular price',
-      //     validator: function (val) {
-      //       //this only point to current document on NEW DOCUMENT creation, doesn't work on updateDocument
-      //       return val < this.price; //100<200=true, 250-200=false this will refer to the current document
-      //     },
-      //   },
       validate: [
         function (val) {
           return val < this.price;
@@ -98,7 +93,7 @@ const tourSchema = new mongoose.Schema(
         default: 'Point', //we can specify multiple geometries in mongoDB, default is Point
         enum: ['Point'],
       },
-      coordinate: [Number], //long,lat
+      coordinates: [Number], //long,lat
       address: String,
       description: String,
     },
@@ -110,7 +105,7 @@ const tourSchema = new mongoose.Schema(
           default: 'Point', //we can specify multiple geometries in mongoDB, default is Point
           enum: ['Point'],
         },
-        coordinate: [Number], //long,lat
+        coordinates: [Number], //long,lat
         address: String,
         description: String,
         day: Number,
@@ -127,6 +122,11 @@ const tourSchema = new mongoose.Schema(
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 //virtual properties, fields defined in schema but will not be saved in DB
+
+// tourSchema.index({ price: 1 });
+tourSchema.index({ price: 1, ratingsAverage: -1 }); //Ordered list of all documents in accordance to the index defined(helps query effeciently)
+tourSchema.index({ slug: 1 }); //Ordered list of all documents in accordance to the index defined(helps query effeciently)
+tourSchema.index({ startLocation: '2dsphere' }); //For geospatial queries
 
 // use regular function to use 'this' keyword, this refers to the current document
 tourSchema.virtual('durationWeeks').get(function () {
@@ -146,24 +146,6 @@ tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true }); //add slug to schema to modify it
   next();
 });
-
-// tourSchema.pre('save', async function (next) { //Embeds documents in DB
-//   const guidesPromises = this.guides.map(async (id) => {
-//     return await User.findById(id);
-//   });
-//   this.guides = await Promise.all(guidesPromises);
-//   next();
-// });
-
-// tourSchema.pre('save', function (next) {
-//   console.log('Will save document......');
-//   next();
-// });
-
-// tourSchema.post('save', function (doc, next) {
-//   //doc contains the finshed document
-//   console.log('Document:', doc);
-// });
 
 //QUERY MIDDLEWARE
 
@@ -190,18 +172,18 @@ tourSchema.pre(/^find/, function (next) {
 });
 
 tourSchema.post(/^find/, function (docs, next) {
-  //will run after quey is executed
+  //will run after query is executed
   console.log(`Query took ${Date.now() - this.start} milliseconds`);
   //console.log(docs);
   next();
 });
 
 //AGGREGATION MIDDLEWARE
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTour: false } });
-  console.log(this.pipeline()); //this=aggregation  object
-  next();
-});
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secretTour: false } });
+//   console.log(this.pipeline()); //this=aggregation  object
+//   next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema); //MODELS ARE LIKE CLASSES, WE CREATE DOCS(OBJECTS) OUT OF THEM
 
