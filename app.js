@@ -1,24 +1,46 @@
+const path = require('path');
 const express = require('express');
-
-const app = express();
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSantize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
+
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
+
+const app = express();
+
+//setting up view engine
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views')); //whenever we search for .render('file'), it will come look in the views for file
+
+//Serving static files,when nothing matches the route
+app.use(express.static(path.join(__dirname, 'public')));
 
 //1) GLOBAL MIDDLEWARES
 //app.use always requires a function not a function call
 
 // SET SECURITY HTTP headers
 app.use(helmet()); //helmet() return a function which in turn is a midlleware function
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'", 'https:', 'http:', 'data:', 'ws:'],
+      baseUri: ["'self'"],
+      fontSrc: ["'self'", 'https:', 'http:', 'data:'],
+      scriptSrc: ["'self'", 'https:', 'http:', 'blob:'],
+      styleSrc: ["'self'", 'https:', 'http:', 'unsafe-inline'],
+    },
+  })
+);
 
 //Development Logging
 if (process.env.NODE_ENV === 'development') {
@@ -37,6 +59,8 @@ app.use('/api', limiter); //rate limit returns us a middleware that we're using
 
 //Body Parser, PUTS DATA of incomming request(JSON) in it's body (req.body)
 app.use(express.json({ limit: '10kb' })); // will not body larger than 10 KB
+//Cookie Parser PUTS DATA of incomming cookies  request in (req.cookies)
+app.use(cookieParser());
 
 //Data sanitization against NoSQL query injection
 app.use(mongoSantize()); //will look into all req.body,req.params and remove all $signs operators etc
@@ -58,14 +82,12 @@ app.use(
   })
 );
 
-//Serving static files,when nothing matches the route
-app.use(express.static(`${__dirname}/public`));
-
 //Test Middleware
 
 app.use((req, res, next) => {
   console.log('Hello from the middleware 🙄');
   req.requestTime = new Date().toISOString();
+  // if (req.cookies) console.log('COOKIE 🍪', req.cookies);
   next();
 });
 
@@ -73,6 +95,7 @@ app.use((req, res, next) => {
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/', viewRouter);
 
 //UNMATCHED REQUESTS HANDLER
 

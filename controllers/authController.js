@@ -88,6 +88,8 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
   //console.log(token);
   if (!token) {
@@ -120,6 +122,32 @@ exports.protect = catchAsync(async (req, res, next) => {
   //GRANT ACCESS TO PROTECTED ROUTE
   req.user = freshUser; //USER IS PUT INTO REQ/USER
   next();
+});
+
+//only for rendered pages, no errors!
+exports.isLoggedIn = catchAsync(async (req, res, next) => {
+  //1) Getting token and check if it's there
+  if (req.cookies.jwt) {
+    //1) Verify token
+    const decoded = await jwt.verify(req.cookies.jwt, process.env.JWT_SECRET); //traditionally, 3rd argument of .verify is a callback
+
+    //2) Check if user still exists
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      return next();
+    }
+
+    // if password is changed post token is sent then that token should be revoked
+    //4)Check if user changed password after token was issued
+    if (await currentUser.changedPasswordAfter(decoded.iat)) {
+      //iat=issued at
+      return next();
+    }
+    //THERE IS A LOGGED IN USER
+    res.locals.user = currentUser; //This will make the user available in the
+    return next();
+  }
+  return next();
 });
 
 exports.restrictTo = (...roles) => {

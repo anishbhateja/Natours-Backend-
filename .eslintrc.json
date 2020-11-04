@@ -17,4 +17,3 @@
     "no-unused-vars": ["off", { "argsIgnorePattern": "req|res|next|val" }]
   }
 }
-// eslint-disable-next-line import/no-useless-path-segments
