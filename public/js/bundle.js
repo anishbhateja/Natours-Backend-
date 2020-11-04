@@ -8403,15 +8403,44 @@ module.exports.default = axios;
 
 },{"./utils":"../../node_modules/axios/lib/utils.js","./helpers/bind":"../../node_modules/axios/lib/helpers/bind.js","./core/Axios":"../../node_modules/axios/lib/core/Axios.js","./core/mergeConfig":"../../node_modules/axios/lib/core/mergeConfig.js","./defaults":"../../node_modules/axios/lib/defaults.js","./cancel/Cancel":"../../node_modules/axios/lib/cancel/Cancel.js","./cancel/CancelToken":"../../node_modules/axios/lib/cancel/CancelToken.js","./cancel/isCancel":"../../node_modules/axios/lib/cancel/isCancel.js","./helpers/spread":"../../node_modules/axios/lib/helpers/spread.js"}],"../../node_modules/axios/index.js":[function(require,module,exports) {
 module.exports = require('./lib/axios');
-},{"./lib/axios":"../../node_modules/axios/lib/axios.js"}],"login.js":[function(require,module,exports) {
+},{"./lib/axios":"../../node_modules/axios/lib/axios.js"}],"alerts.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.login = void 0;
+exports.showAlert = exports.hideAlert = void 0;
+
+//type is success or failure
+var hideAlert = function hideAlert() {
+  var el = document.querySelector('.alert');
+
+  if (el) {
+    el.parentElement.removeChild(el);
+  }
+};
+
+exports.hideAlert = hideAlert;
+
+var showAlert = function showAlert(type, msg) {
+  hideAlert();
+  var markup = "<div class=\"alert alert--".concat(type, "\">").concat(msg, "</div>");
+  document.querySelector('body').insertAdjacentHTML('afterbegin', markup);
+  window.setTimeout(hideAlert, 5000);
+};
+
+exports.showAlert = showAlert;
+},{}],"login.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.logout = exports.login = void 0;
 
 var _axios = _interopRequireDefault(require("axios"));
+
+var _alerts = require("./alerts");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -8445,7 +8474,7 @@ function () {
             res = _context.sent;
 
             if (res.data.status === 'success') {
-              alert('Logged in successfully');
+              (0, _alerts.showAlert)('success', 'Logged in successfully');
               window.setTimeout(function () {
                 location.assign('/');
               }, 1500);
@@ -8457,7 +8486,7 @@ function () {
           case 7:
             _context.prev = 7;
             _context.t0 = _context["catch"](0);
-            alert(_context.t0.response.data.message);
+            (0, _alerts.showAlert)('error', _context.t0.response.data.message);
 
           case 10:
           case "end":
@@ -8473,7 +8502,56 @@ function () {
 }();
 
 exports.login = login;
-},{"axios":"../../node_modules/axios/index.js"}],"index.js":[function(require,module,exports) {
+
+var logout =
+/*#__PURE__*/
+function () {
+  var _ref2 = _asyncToGenerator(
+  /*#__PURE__*/
+  regeneratorRuntime.mark(function _callee2(req, res) {
+    var _res;
+
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _context2.prev = 0;
+            _context2.next = 3;
+            return (0, _axios.default)({
+              method: 'GET',
+              url: '/api/v1/users/logout'
+            });
+
+          case 3:
+            _res = _context2.sent;
+
+            if (_res.data.status === 'success') {
+              location.reload(true);
+            }
+
+            _context2.next = 10;
+            break;
+
+          case 7:
+            _context2.prev = 7;
+            _context2.t0 = _context2["catch"](0);
+            (0, _alerts.showAlert)('error', 'Error logging out! Try again later.');
+
+          case 10:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[0, 7]]);
+  }));
+
+  return function logout(_x3, _x4) {
+    return _ref2.apply(this, arguments);
+  };
+}();
+
+exports.logout = logout;
+},{"axios":"../../node_modules/axios/index.js","./alerts":"alerts.js"}],"index.js":[function(require,module,exports) {
 "use strict";
 
 require("core-js/modules/es6.array.copy-within");
@@ -8734,6 +8812,7 @@ var _login = require("./login");
 // //DOM ELEMENTS
 var mapBox = document.getElementById('map');
 var loginForm = document.querySelector('.form');
+var logOutBtn = document.querySelector('.nav__el--logout');
 
 if (mapBox) {
   var locations = JSON.parse(mapBox.dataset.locations);
@@ -8748,6 +8827,12 @@ if (loginForm) {
     var email = document.getElementById('email').value;
     var password = document.getElementById('password').value;
     (0, _login.login)(email, password);
+  });
+}
+
+if (logOutBtn) {
+  logOutBtn.addEventListener('click', function () {
+    (0, _login.logout)();
   });
 }
 
@@ -8780,7 +8865,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50095" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63654" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

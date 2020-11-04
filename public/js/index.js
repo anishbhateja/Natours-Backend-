@@ -1,5 +1,5 @@
 import { displayMap } from './mapbox';
-import { login } from './login';
+import { login, logout } from './login';
 import '@babel/polyfill';
 
 // console.log('Hello from index.js');
@@ -7,6 +7,7 @@ import '@babel/polyfill';
 // //DOM ELEMENTS
 const mapBox = document.getElementById('map');
 const loginForm = document.querySelector('.form');
+const logOutBtn = document.querySelector('.nav__el--logout');
 
 if (mapBox) {
   const locations = JSON.parse(mapBox.dataset.locations);
@@ -23,4 +24,10 @@ if (loginForm) {
     login(email, password);
   });
 }
+if (logOutBtn) {
+  logOutBtn.addEventListener('click', () => {
+    logout();
+  });
+}
+
 console.log('Hello from parcel!');

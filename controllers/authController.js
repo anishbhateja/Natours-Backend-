@@ -80,6 +80,18 @@ exports.login = catchAsync(async (req, res, next) => {
   //   });
 });
 
+//for logging out since we have a httpOnly:true i.e we cannot delete/update cookie on the browser in any way, hence we create a route that
+//sends return a cookie with the same that exists on browser such that it overrides the previous with new empty cookie
+exports.logout = catchAsync(async (req, res, next) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({
+    status: 'success',
+  });
+});
+
 exports.protect = catchAsync(async (req, res, next) => {
   //1) Getting token and check if it's there
   let token;
@@ -125,30 +137,35 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 //only for rendered pages, no errors!
-exports.isLoggedIn = catchAsync(async (req, res, next) => {
+exports.isLoggedIn = async (req, res, next) => {
   //1) Getting token and check if it's there
-  if (req.cookies.jwt) {
-    //1) Verify token
-    const decoded = await jwt.verify(req.cookies.jwt, process.env.JWT_SECRET); //traditionally, 3rd argument of .verify is a callback
+  try {
+    if (req.cookies.jwt) {
+      //1) Verify token
+      const decoded = await jwt.verify(req.cookies.jwt, process.env.JWT_SECRET); //traditionally, 3rd argument of .verify is a callback
 
-    //2) Check if user still exists
-    const currentUser = await User.findById(decoded.id);
-    if (!currentUser) {
+      //2) Check if user still exists
+      const currentUser = await User.findById(decoded.id);
+      if (!currentUser) {
+        return next();
+      }
+
+      // if password is changed post token is sent then that token should be revoked
+      //4)Check if user changed password after token was issued
+      if (await currentUser.changedPasswordAfter(decoded.iat)) {
+        //iat=issued at
+        return next();
+      }
+      //THERE IS A LOGGED IN USER
+      res.locals.user = currentUser; //This will make the user available in the
       return next();
     }
-
-    // if password is changed post token is sent then that token should be revoked
-    //4)Check if user changed password after token was issued
-    if (await currentUser.changedPasswordAfter(decoded.iat)) {
-      //iat=issued at
-      return next();
-    }
-    //THERE IS A LOGGED IN USER
-    res.locals.user = currentUser; //This will make the user available in the
+  } catch (error) {
     return next();
   }
+
   return next();
-});
+};
 
 exports.restrictTo = (...roles) => {
   //es6 syntax for array
