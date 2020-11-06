@@ -3,7 +3,6 @@ include _reviewCard
 //- this will append to whatever that is present in block head in base template 
 block append head
   //- script(src='/js/mapbox.js')
-  meta(http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' 'self'; script-src * 'unsafe-inline' 'unsafe-eval' blob:; img-src * 'self' data: blob:;")
   script(src='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js')
   link(href='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css',rel='stylesheet')
 

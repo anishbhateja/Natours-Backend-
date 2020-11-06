@@ -133,6 +133,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   //GRANT ACCESS TO PROTECTED ROUTE
   req.user = freshUser; //USER IS PUT INTO REQ/USER
+  res.locals.user = freshUser; //USER IS PUT INTO res.locals for access in templates
   next();
 });
 

@@ -57,10 +57,13 @@ const limiter = rateLimit({
 
 app.use('/api', limiter); //rate limit returns us a middleware that we're using
 
+//PARSER
+
 //Body Parser, PUTS DATA of incomming request(JSON) in it's body (req.body)
 app.use(express.json({ limit: '10kb' })); // will not body larger than 10 KB
 //Cookie Parser PUTS DATA of incomming cookies  request in (req.cookies)
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 //Data sanitization against NoSQL query injection
 app.use(mongoSantize()); //will look into all req.body,req.params and remove all $signs operators etc
@@ -87,7 +90,7 @@ app.use(
 app.use((req, res, next) => {
   console.log('Hello from the middleware 🙄');
   req.requestTime = new Date().toISOString();
-  // if (req.cookies) console.log('COOKIE 🍪', req.cookies);
+  if (req.cookies) console.log('COOKIE 🍪', req.cookies);
   next();
 });
 

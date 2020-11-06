@@ -1,3 +1,5 @@
+const multer = require('multer');
+const sharp = require('sharp');
 const Tour = require('../models/tourModels');
 const APIFeatures = require('../utils/apiFeaturs');
 const catchAsync = require('../utils/catchAsync');
@@ -7,6 +9,66 @@ const factory = require('./handlerFactory');
 // const tours = JSON.parse(
 //   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, 'utf-8')
 // );
+
+const multerStorage = multer.memoryStorage(); //img will be stored as buffer in memory
+
+// multerFilter:checks if the uploaded file is an image, if yes, we pass true to cb else false
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Not an image! Please upload only images.', 404), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadTourImages = upload.fields([
+  { name: 'imageCover', maxCount: 1 },
+  { name: 'images', maxCount: 3 },
+]);
+
+//upload.array('images',5)  //if we only had multiple images with same name ---> REQ.FILES
+//upload.single('image') ->REQ.FILE (returns req.file while the above to return req.files)
+
+exports.resizeTourImages = catchAsync(async (req, res, next) => {
+  if (!req.files.images || !req.files.imageCover) {
+    return next();
+  }
+
+  //1) Cover Image
+  req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+
+  await sharp(req.files.imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/tours/${req.body.imageCover}`);
+
+  //if we use foreach, the inner function being asyn will be skipped and we directly hit the next(), and req.body.images will be empty and  it will not be
+  //persisted in the database in next middleware because the code in running asynchronously
+  //hence we use a map method, map returns an array, and since all of the functions are asynchronous inside map
+  //it will return an array of promises which we can wait for, that will all the req.body.images to filled up and only then call for the next()
+
+  //2) Images
+  req.body.images = [];
+  await Promise.all(
+    //check above explanation
+    req.files.images.map(async (file, index) => {
+      const filename = `tour-${req.params.id}-${Date.now()}-${index + 1}.jpeg`;
+      await sharp(file.buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${filename}`);
+      req.body.images.push(filename);
+    })
+  );
+  next();
+});
 
 //2) ROUTE HANDLERS (TOUR)
 

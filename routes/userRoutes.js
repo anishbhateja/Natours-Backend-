@@ -5,12 +5,6 @@ const reviewController = require('../controllers/reviewController.js');
 
 const router = express.Router();
 
-router.get(
-  '/me',
-  authController.protect,
-  userController.getMe,
-  userController.getUser
-);
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
@@ -21,8 +15,19 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 router.use(authController.protect);
 
 router.patch('/updateMyPassword', authController.updatePassword);
-router.patch('/updateMe', userController.updateMe);
+router.patch(
+  '/updateMe',
+  userController.uploadUserPhoto, //this stores image from file in the buffer not in the disk.
+  userController.resizeUserPhoto, //extracts the image from buffer(memory), resizes it and stores it on the disk
+  userController.updateMe // updates photo along with any other data(name and email)
+); //upload.single grabs the file and stores it to the destination
 router.delete('/deleteMe', userController.deleteMe);
+router.get(
+  '/me',
+  authController.protect,
+  userController.getMe,
+  userController.getUser
+);
 
 router.use(authController.restrictTo('admin'));
 
