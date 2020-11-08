@@ -7,6 +7,7 @@ const mongoSantize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -86,12 +87,14 @@ app.use(
   })
 );
 
+app.use(compression()); //will compress all the files being sent over to the client.(not for images)
+
 //Test Middleware
 
 app.use((req, res, next) => {
-  console.log('Hello from the middleware 🙄');
+  // console.log('Hello from the middleware 🙄');
   req.requestTime = new Date().toISOString();
-  if (req.cookies) console.log('COOKIE 🍪', req.cookies);
+  //if (req.cookies) console.log('COOKIE 🍪', req.cookies);
   next();
 });
 
@@ -105,12 +108,6 @@ app.use('/', viewRouter);
 //UNMATCHED REQUESTS HANDLER
 
 app.all('*', (req, res, next) => {
-  // let err = new Error(`Can't find ${req.originalUrl} on this server! `);
-  // err.status = 'fail';
-  // err.statusCode = 404;
-  // next(err);
-  //if next is given an argument no matter what! Express will assume that it was an error, it will skip all the middlewares in
-  //middleware stack directly to the GLOBAL ERROR HANDLING MIDDLEWARE
   next(new AppError(`Can't find ${req.originalUrl} on this server! `, 404));
 });
 

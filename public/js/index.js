@@ -16,12 +16,12 @@ const bookBtn = document.getElementById('book-tour');
 
 if (mapBox) {
   const locations = JSON.parse(mapBox.dataset.locations);
-  console.log('Hey from the MapBox 🤗');
+  // console.log('Hey from the MapBox 🤗');
   displayMap(locations);
 }
 
 if (loginForm) {
-  console.log('Hey from the LOGIN form 🤗');
+  // console.log('Hey from the LOGIN form 🤗');
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('email').value;
@@ -79,4 +79,4 @@ if (bookBtn) {
   });
 }
 
-console.log('Hello from parcel!');
+// console.log('Hello from parcel!');

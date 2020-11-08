@@ -10,7 +10,7 @@ exports.setTourUserIds = (req, res, next) => {
   if (!req.body.user) {
     req.body.user = req.user.id; //we get user from auth protect middleware
   }
-  console.log('Tour User Ids Sets', req.body);
+  // console.log('Tour User Ids Sets', req.body);
   next();
 };
 

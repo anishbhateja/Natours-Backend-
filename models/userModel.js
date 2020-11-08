@@ -122,7 +122,7 @@ userSchema.methods.correctPasswordResetToken = function () {
     .update(resetToken)
     .digest('hex');
 
-  console.log({ resetToken }, this.passwordResetToken);
+  // console.log({ resetToken }, this.passwordResetToken);
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; //token will expire in 10 minutes
   return resetToken; // we will send unencrypted token,
   //DATABASE has encrypted token, user is sent plain reset token

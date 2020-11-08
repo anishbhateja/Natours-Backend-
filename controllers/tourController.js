@@ -171,7 +171,7 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
 //returns all tours that lies within a given distance of a given latlng
 exports.getToursWithin = catchAsync(async (req, res, next) => {
   const { distance, latlng, unit } = req.params;
-  console.log(distance, latlng, unit);
+  // console.log(distance, latlng, unit);
 
   const [lat, lng] = latlng.split(',');
 
