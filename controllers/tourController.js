@@ -12,7 +12,6 @@ const factory = require('./handlerFactory');
 
 const multerStorage = multer.memoryStorage(); //img will be stored as buffer in memory
 
-// multerFilter:checks if the uploaded file is an image, if yes, we pass true to cb else false
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
     cb(null, true);

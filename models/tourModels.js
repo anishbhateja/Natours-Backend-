@@ -133,12 +133,19 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7; //Add toJSON: { virtuals: true }, toObject: { virtuals: true } in options
 });
 
-//VIRTUAL POPULATE
+//VIRTUAL POPULATE (Virtuals will fetch all the documents in REF MODEL which have same foreign field and local field)
+
 tourSchema.virtual('reviews', {
   ref: 'Review',
   foreignField: 'tour', //matching foreign field 'tour' in Review collection
   localField: '_id', //Comparing it with _id of this document, it will fetch all those review documents with matching foreign-local fields
 });
+
+// tourSchema.virtual('bookings', {
+//   ref: 'Booking',
+//   foreignField: 'tour', //matching foreign field 'tour' in Review collection
+//   localField: '_id', //Comparing it with _id of this document, it will fetch all those review documents with matching foreign-local fields
+// });
 
 //DOCUMENT MIDDLEWARE: runs before .save() and .create()  but NOT inserMany()
 tourSchema.pre('save', function (next) {
