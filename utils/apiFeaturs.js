@@ -11,8 +11,8 @@ class APIFeatures {
       delete queryObject[ele];
     });
     //1B) Advanced Filtering
+    //?duration[gte]=5 ---->    // {difficulty:'easy', duration:{gte: '5'}}
     // {difficulty:'easy', duration:{$gte:5 }}
-    // {difficulty:'easy', duration:{gte: '5'}}
     // gte, gt, lte, lt
 
     let queryStr = JSON.stringify(queryObject);

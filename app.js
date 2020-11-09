@@ -20,6 +20,8 @@ const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
 
+app.enable('trust proxy'); //heroku modiefies are incoming request, it's headers, this prevents it from doing so
+
 //setting up view engine
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views')); //whenever we search for .render('file'), it will come look in the views for file

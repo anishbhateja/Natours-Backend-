@@ -45,3 +45,13 @@ process.on('unhandledRejection', (err) => {
     process.exit(1); //0->success 1->unhandled rejection
   });
 });
+
+//Heroku sends a sigtem signal to shut down, hence we need to make sure the system shuts down gracefully.
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received! 💥Shutting down.........');
+  server.close(() => {
+    //will make ongoing requests are completed before Shutting down
+    console.log('💥 Process terminated!');
+    //SIGTERM will automatically make the process shut
+  });
+});

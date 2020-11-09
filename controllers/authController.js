@@ -12,19 +12,21 @@ const signToken = (id) => {
   });
 };
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
-  const cookieOptions = {
+
+  //In development we send cookies over http but in production
+  //we first check if we're actually on https by checking the below conditions and then send over cookies over https in production
+  //being in production doesn't gurantee https, hence we check with the conditions req.secure || req.headers['x-forwarded-proto'] === 'https'
+
+  res.cookie('jwt', token, {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
-    //secure: false, //cookie will only be sent over https
-    httpOnly: true, // client receive cookie, stores it and sends it with every response
-  };
-  if (process.env.NODE_ENV === 'production ') {
-    cookieOptions.secure = true; //cookie will only be sent over https
-  }
-  res.cookie('jwt', token, cookieOptions);
+    httpOnly: true, //secure: false, //cookie will only be sent over http
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https', //if true, cookies will only be sent over https
+  });
+
   user.password = undefined;
   res.status(statusCode).json({
     status: 'success',
@@ -46,7 +48,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
   const url = `${req.protocol}://${req.get('host')}/me`;
   await new Email(newUser, url).sendWelcome();
-  createSendToken(newUser, 201, res);
+  createSendToken(newUser, 201, req, res);
   //   const token = signToken(newUser._id);
 
   //   res.status(201).json({
@@ -73,7 +75,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError(`Incorrect email or password`, 401));
   }
   //3)if everthing is okay, send token to client
-  createSendToken(user, 200, res);
+  createSendToken(user, 200, req, res);
 
   //   const token = signToken(user._id);
   //   res.status(200).json({
@@ -244,7 +246,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   await user.save();
 
   //4 Log user in in,send jwt to user
-  createSendToken(user, 200, res);
+  createSendToken(user, 200, req, res);
 
   //   const token = signToken(user._id);
   //   res.status(200).json({
@@ -272,7 +274,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   //always use .save and .create
 
   //4 Log user in, send jwt
-  createSendToken(user, 201, res);
+  createSendToken(user, 201, req, res);
 
   //   const token = signToken(user._id);
   //   return res.status(200).json({
