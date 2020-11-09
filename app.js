@@ -8,6 +8,7 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
+const cors = require('cors');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -31,6 +32,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //1) GLOBAL MIDDLEWARES
 //app.use always requires a function not a function call
+
+app.use(cors()); //sets headers on res to all cross sharing
+//will Access-Control-Allow-Origin set to all requets coming through,(allowing everyone to consume our api )
+//this will only work on simple request(post and get )
+
+//when we want to all cross sharing only with one particula domain 'https://www.natours.com'
+// api.natours.com front-end natours.com
+// app.use(
+//   cors({
+//     origin: 'https://www.natours.com',
+//   })
+// );
+
+//for non simple(patch,update,delete) requests, browser sends an options request(preflight phase) to which we send an Access-Control-Allow-Origin header
+//to confirm with browser that it is safe to send over non simple request from cross sharing resources
+app.options('*', cors());
+//app.options('/api/v1/tours/:id', cors());
 
 // SET SECURITY HTTP headers
 app.use(helmet()); //helmet() return a function which in turn is a midlleware function

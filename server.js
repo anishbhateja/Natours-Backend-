@@ -46,7 +46,7 @@ process.on('unhandledRejection', (err) => {
   });
 });
 
-//Heroku sends a sigtem signal to shut down, hence we need to make sure the system shuts down gracefully.
+//Heroku sends a sigtem signal every 24hrs to shut down, hence we need to make sure the system shuts down gracefully.
 process.on('SIGTERM', () => {
   console.log('SIGTERM received! 💥Shutting down.........');
   server.close(() => {
