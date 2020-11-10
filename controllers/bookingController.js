@@ -18,7 +18,7 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
     // success_url: `${req.protocol}://${req.get('host')}/my-tours?tour=${
     //   req.params.tourID
     // }&user=${req.user.id}&price=${tour.price}`,
-    success_url: `${req.protocol}://${req.get('host')}/my-tours`,
+    success_url: `${req.protocol}://${req.get('host')}/my-tours?alert=booking`,
     cancel_url: `${req.protocol}://${req.get('host')}/tour/${tour.slug}`,
     customer_email: req.user.email,
     client_reference_id: req.params.tourID, //we will be creating a booking from this session object: which userID,tourID,price
@@ -66,7 +66,6 @@ const createBookingCheckout = async (session) => {
 
 //this is a webhook, as soon as payment is successful, stripe will make a posy request to this route before going to the success url
 exports.webhookCheckout = async (req, res, next) => {
-  console.log('Hello from webhook checkout');
   const signature = req.headers['stripe-signature'];
   var event;
   try {
@@ -78,7 +77,6 @@ exports.webhookCheckout = async (req, res, next) => {
   } catch (error) {
     return res.status(400).send(`Webhook error: ${error.message}`);
   }
-  console.log('STRIPE EVENT', event);
 
   if (event.object === 'event') {
     createBookingCheckout(event.data.object);
