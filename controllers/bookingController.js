@@ -79,7 +79,7 @@ exports.webhookCheckout = async (req, res, next) => {
   }
   console.log('STRIPE EVENT', event);
 
-  if (event.type === 'checkout.session.completed') {
+  if (event.object === 'event') {
     createBookingCheckout(event.data.object);
     res.status(200).json({
       received: true,
