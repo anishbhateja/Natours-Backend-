@@ -57,17 +57,19 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
 const createBookingCheckout = async (session) => {
   const tour = session.client_reference_id;
   const user = await User.findOne({ email: session.customer_email }).id;
-  const price = session.display_items[0].amount / 100;
+  // const price = session.display_items[0].amount / 100;
+  const price = session.amount_total / (100 * 73.98);
 
   await Booking.create({ tour, user, price });
 };
 
 //this is a webhook, as soon as payment is successful, stripe will make a posy request to this route before going to the success url
 exports.webhookCheckout = async (req, res, next) => {
+  console.log('Hello from webhook checkout');
   const signature = req.headers['stripe-signature'];
-  let event;
+  var event;
   try {
-    event = await stripe.webhooks.constructEvent(
+    event = stripe.webhooks.constructEvent(
       req.body, //this body needs to be in the raw format
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
@@ -75,8 +77,10 @@ exports.webhookCheckout = async (req, res, next) => {
   } catch (error) {
     return res.status(400).send(`Webhook error: ${error.message}`);
   }
+  console.log('STRIPE EVENT', event);
+
   if (event.type === 'checkout.session.completed') {
-    await createBookingCheckout(event.data.object);
+    createBookingCheckout(event.data.object);
     res.status(200).json({
       received: true,
     });
