@@ -61,7 +61,7 @@ const createBookingCheckout = async (session) => {
   // const price = session.display_items[0].amount / 100;
   const price = session.amount_total / (100 * 73.98);
 
-  await Booking.create({ tour, userId, price });
+  await Booking.create({ tour, user: userId, price });
 };
 
 //this is a webhook, as soon as payment is successful, stripe will make a posy request to this route before going to the success url
