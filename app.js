@@ -7,6 +7,7 @@ const mongoSantize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 const compression = require('compression');
 const cors = require('cors');
 
@@ -17,6 +18,7 @@ const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
+const bookingController = require('./controllers/bookingController');
 const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
@@ -48,7 +50,7 @@ app.use(cors()); //sets headers on res to all cross sharing
 //for non simple(patch,update,delete) requests, browser sends an options request(preflight phase) to which we send an Access-Control-Allow-Origin header
 //to confirm with browser that it is safe to send over non simple request from cross sharing resources
 app.options('*', cors());
-//app.options('/api/v1/tours/:id', cors());
+//app.options('/api/v1/tours/:id', cors()); //can allow non simple request for only cerain routes
 
 // SET SECURITY HTTP headers
 app.use(helmet()); //helmet() return a function which in turn is a midlleware function
@@ -78,6 +80,15 @@ const limiter = rateLimit({
 });
 
 app.use('/api', limiter); //rate limit returns us a middleware that we're using
+
+//we write this here because the stripe function that will read the sessions objects needs it in RAW FORM and not json
+//express.raw() will parse data in raw form
+app.post(
+  '/webhook-checkout',
+  bodyParser.raw({ type: 'application/json' }),
+  bookingController.webhookCheckout
+);
+//app.use(express.json()); as soon as the req passes this middleware, it will parse data in json
 
 //PARSER
 
