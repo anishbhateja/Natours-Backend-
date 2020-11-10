@@ -56,11 +56,12 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
 
 const createBookingCheckout = async (session) => {
   const tour = session.client_reference_id;
-  const user = await User.findOne({ email: session.customer_email }).id;
+  const user = await User.findOne({ email: session.customer_email });
+  const userId = user.id;
   // const price = session.display_items[0].amount / 100;
   const price = session.amount_total / (100 * 73.98);
 
-  await Booking.create({ tour, user, price });
+  await Booking.create({ tour, userId, price });
 };
 
 //this is a webhook, as soon as payment is successful, stripe will make a posy request to this route before going to the success url
